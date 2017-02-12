@@ -1,0 +1,14 @@
+filter:
+    paths: ["src/*"]
+checks:
+    php: true
+coding_style:
+    php:
+        indentation:
+            general:
+                use_tabs: true
+        spaces:
+            general:
+                linefeed_character: return-newline
+            around_operators:
+                concatenation: true
