@@ -44,4 +44,14 @@ class ContainerTest extends TestCase
 		$this->assertTrue($container->has('service'));
 		$this->assertFalse($container->has('non_existent'));
 	}
+
+	/**
+	 * @expectedException ServiceNotFoundException
+	 * @expectedExceptionMessage The service "foo" does not exist.
+	 */
+	public function testServiceDoesNotExist()
+	{
+		$container = new Container();
+		echo $container->get('foo');
+	}
 }
