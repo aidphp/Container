@@ -20,10 +20,18 @@
         "php": ">=5.4.0",
         "container-interop/container-interop": "~1.0"
     },
+    "require-dev": {
+		"phpunit/phpunit": "^4.6 || ^5.2.10"
+    },
     "autoload": {
-        "psr-0": {
+        "psr-4": {
         	"Aidphp\\Container\\": "src/"
     	}
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Aidphp\\Container\\": "tests/"
+        }
+	},
     "target-dir": "Aidphp/Dic"
 }
