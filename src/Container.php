@@ -32,7 +32,7 @@ class Container implements ContainerInterface
 
 		if (! isset($this->factories[$id]))
 		{
-			throw new NotFoundException('The service "' . $id . '" does not exist');
+			throw new ServiceNotFoundException('The service "' . $id . '" does not exist');
 		}
 
 		$service = $this->factories[$id]($this);
