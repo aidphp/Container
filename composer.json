@@ -1,0 +1,29 @@
+{
+    "name": "aidphp/container",
+    "type": "librairy",
+    "version": "1.0.0-dev",
+    "description": "dependency injection container",
+    "keywords": [
+    	"container",
+        "dependency injection",
+        "di",
+        "di container",
+		"dependency injection container"
+	],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Maxime"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "container-interop/container-interop": "~1.0"
+    },
+    "autoload": {
+        "psr-0": {
+        	"Aidphp\\Container\\": "src/"
+    	}
+    },
+    "target-dir": "Aidphp/Dic"
+}
