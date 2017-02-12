@@ -46,7 +46,7 @@ class ContainerTest extends TestCase
 	}
 
 	/**
-	 * @expectedException ServiceNotFoundException
+	 * @expectedException \Aidphp\Container\ServiceNotFoundException
 	 * @expectedExceptionMessage The service "foo" does not exist.
 	 */
 	public function testServiceDoesNotExist()
