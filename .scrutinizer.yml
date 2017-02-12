@@ -1,7 +1,8 @@
 checks:
     php: true
 filter:
-    paths: ["src/*"]
+    excluded_paths:
+        - 'tests/*'
 tools:
     external_code_coverage: true
     php_code_coverage: true
