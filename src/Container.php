@@ -59,17 +59,17 @@ class Container implements ContainerInterface, RootContainerAwareInterface
         }
 
         if (! isset($this->factories[$id]))
-		{
-		    throw new NotFoundException($id);
-		}
+        {
+            throw new NotFoundException($id);
+        }
 
-		$value = $this->factories[$id]($this->root ?? $this);
+        $value = $this->factories[$id]($this->root);
 
-		if ($this->shared[$id])
-		{
-		    $this->data[$id] = $value;
-		    unset($this->factories[$id]);
-		}
+        if ($this->shared[$id])
+        {
+            $this->data[$id] = $value;
+            unset($this->factories[$id]);
+        }
 
 		return $value;
     }
