@@ -1,36 +1,32 @@
 {
-	"name": "aidphp/container",
-	"type": "librairy",
-	"version": "1.0.0-dev",
-	"description": "dependency injection container",
-	"keywords": [
+	"name" : "aidphp/di",
+	"type" : "library",
+	"description" : "dependency injection container",
+	"license" : "MIT",
+	"keywords" : [
 		"container",
-		"dependency injection",
 		"di",
-		"di container",
-		"dependency injection container"
+		"psr-11"
 	],
-	"license": "MIT",
-	"authors": [
-		{
-			"name": "Maxime Bourmaut"
+	"authors" : [{
+			"name" : "Maxime Bourmaut"
 		}
 	],
-	"require": {
-		"php": ">=5.4.0",
-		"container-interop/container-interop": "~1.0"
+	"require" : {
+		"php" : "^7.1.0",
+		"psr/container" : "^1.0"
 	},
-	"require-dev": {
-		"phpunit/phpunit": "^4.6 || ^5.2.10"
+	"require-dev" : {
+		"phpunit/phpunit" : "^7.0"
 	},
-	"autoload": {
-		"psr-4": {
-			"Aidphp\\Container\\": "src/"
+	"autoload" : {
+		"psr-4" : {
+			"Aidphp\\Di\\" : "src/"
 		}
 	},
-	"autoload-dev": {
-		"psr-4": {
-			"Aidphp\\Container\\": "tests/"
+	"autoload-dev" : {
+		"psr-4" : {
+			"Test\\Aidphp\\Di\\" : "test/"
 		}
 	}
 }

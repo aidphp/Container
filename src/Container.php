@@ -1,53 +1,81 @@
 <?php
 
-namespace Aidphp\Container;
+declare(strict_types=1);
 
-use Interop\Container\ContainerInterface;
+namespace Aidphp\Di;
 
-class Container implements ContainerInterface
+use Psr\Container\ContainerInterface;
+
+class Container implements ContainerInterface, RootContainerAwareInterface
 {
-	protected $services = array();
-	protected $factories = array();
-	protected $shared = array();
+    protected $root;
+    protected $data      = [];
+    protected $factories = [];
+    protected $shared    = [];
 
-	public function register($id, callable $factory, $shared = true)
-	{
-		$this->factories[$id] = $factory;
-		$this->shared[$id] = (bool) $shared;
-		return $this;
-	}
+    public function __construct(array $data = [], ContainerInterface $container = null)
+    {
+        $this->data = $data;
+        $this->setRoot($container);
+    }
 
-	public function set($id, $service)
-	{
-		$this->services[$id] = $service;
-		return $this;
-	}
+    public function setRoot(ContainerInterface $container = null): self
+    {
+        if ($this->root)
+        {
+            unset($this->data[get_class($this->root)]);
+        }
 
-	public function get($id)
-	{
-		if (isset($this->services[$id]))
+        $this->root = $container ?? $this;
+
+        $this->data[ContainerInterface::class] = $this->root;
+        $this->data[get_class($this->root)] = $this->root;
+        return $this;
+    }
+
+    public function register($id, callable $factory, bool $shared = true): self
+    {
+        $this->factories[$id] = $factory;
+        $this->shared[$id]    = $shared;
+        return $this;
+    }
+
+    public function set($id, $value): self
+    {
+        if (isset($this->data[$id]))
+        {
+            throw new ContainerException('Identifier "' . $id . '" is already defined, cannot replace it');
+        }
+
+        $this->data[$id] = $value;
+        return $this;
+    }
+
+    public function get($id)
+    {
+        if (isset($this->data[$id]) || array_key_exists($id, $this->data))
+        {
+            return $this->data[$id];
+        }
+
+        if (! isset($this->factories[$id]))
 		{
-			return $this->services[$id];
+		    throw new NotFoundException($id);
 		}
 
-		if (!isset($this->factories[$id]))
-		{
-			throw new ServiceNotFoundException(sprintf('The service "%s" does not exist.', $id));
-		}
-
-		$service = $this->factories[$id]($this);
+		$value = $this->factories[$id]($this->root ?? $this);
 
 		if ($this->shared[$id])
 		{
-			$this->services[$id] = $service;
-			unset($this->factories[$id]);
+		    $this->data[$id] = $value;
+		    unset($this->factories[$id]);
 		}
 
-		return $service;
-	}
+		return $value;
+    }
 
-	public function has($id)
-	{
-		return isset($this->services[$id]) || isset($this->factories[$id]);
-	}
+    public function has($id): bool
+    {
+        return isset($this->data[$id]) || isset($this->factories[$id]) || array_key_exists($id, $this->data);
+    }
 }
