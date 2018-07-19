@@ -10,6 +10,14 @@ class CompositeContainer implements ContainerInterface
 {
     protected $containers = [];
 
+    public function __construct(array $containers = [])
+    {
+        foreach ($containers as $container)
+        {
+            $this->push($container);
+        }
+    }
+
     public function push(ContainerInterface $container): self
     {
         if ($container instanceof RootContainerAwareInterface)

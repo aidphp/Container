@@ -12,9 +12,18 @@ use Aidphp\Di\Container;
 
 class CompositeContainerTest extends TestCase
 {
-    public function testConstructor()
+    public function testConstructorEmpty()
     {
         $container = new CompositeContainer();
+        $this->assertInstanceOf(ContainerInterface::class, $container);
+    }
+
+    public function testConstructor()
+    {
+        $dic1 = $this->createMock(ContainerInterface::class);
+        $dic2 = $this->createMock(ContainerInterface::class);
+
+        $container = new CompositeContainer([$dic1, $dic2]);
         $this->assertInstanceOf(ContainerInterface::class, $container);
     }
 
