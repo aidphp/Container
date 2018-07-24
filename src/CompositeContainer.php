@@ -6,7 +6,7 @@ namespace Aidphp\Di;
 
 use Psr\Container\ContainerInterface;
 
-class CompositeContainer implements ContainerInterface
+class CompositeContainer implements CompositeContainerInterface
 {
     protected $containers = [];
 
@@ -18,7 +18,7 @@ class CompositeContainer implements ContainerInterface
         }
     }
 
-    public function push(ContainerInterface $container): self
+    public function push(ContainerInterface $container): CompositeContainerInterface
     {
         if ($container instanceof RootContainerAwareInterface)
         {

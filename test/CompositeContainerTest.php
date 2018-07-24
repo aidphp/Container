@@ -7,6 +7,7 @@ namespace Test\Aidphp\Di;
 use PHPUnit\Framework\TestCase;
 use Aidphp\Di\CompositeContainer;
 use Psr\Container\ContainerInterface;
+use Aidphp\Di\CompositeContainerInterface;
 use Aidphp\Di\NotFoundException;
 use Aidphp\Di\Container;
 
@@ -16,6 +17,7 @@ class CompositeContainerTest extends TestCase
     {
         $container = new CompositeContainer();
         $this->assertInstanceOf(ContainerInterface::class, $container);
+        $this->assertInstanceOf(CompositeContainerInterface::class, $container);
     }
 
     public function testConstructor()
