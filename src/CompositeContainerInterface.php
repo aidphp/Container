@@ -8,6 +8,6 @@ use Psr\Container\ContainerInterface;
 
 interface CompositeContainerInterface extends ContainerInterface
 {
-    function push(ContainerInterface $container): self;
+    function push(ContainerInterface $container);
     function pop(): ?ContainerInterface;
 }
