@@ -1,179 +1,209 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Test\Aidphp\Di;
 
 use PHPUnit\Framework\TestCase;
 use Aidphp\Di\Container;
-use Psr\Container\ContainerInterface;
-use Aidphp\Di\RootContainerAwareInterface;
-use Aidphp\Di\ContainerException;
-use Aidphp\Di\NotFoundException;
 use stdClass;
 
 class ContainerTest extends TestCase
 {
-    public function testConstructor()
-    {
-        $container = new Container();
-        $this->assertInstanceOf(ContainerInterface::class, $container);
-        $this->assertInstanceOf(RootContainerAwareInterface::class, $container);
+    protected $dic;
 
-        $this->assertTrue($container->has(ContainerInterface::class));
-        $this->assertTrue($container->has(Container::class));
-        $this->assertSame($container, $container->get(ContainerInterface::class));
-        $this->assertSame($container, $container->get(Container::class));
+    public function setUp()
+    {
+        $this->dic = new Container();
     }
 
-    public function testConstructorWithParams()
+    public function testClassWithoutConstructor()
     {
-        $service = new stdClass();
-        $container = new Container(['id' => 'foo', stdClass::class => $service]);
-        $this->assertTrue($container->has('id'));
-        $this->assertSame('foo', $container->get('id'));
-        $this->assertTrue($container->has(stdClass::class));
-        $this->assertSame($service, $container->get(stdClass::class));
+        $this->assertInstanceOf(TestWithoutConstructor::class, $this->dic->get(TestWithoutConstructor::class));
     }
 
-    public function testConstructorWithRoot()
+    public function testClassWithConstructor()
     {
-        $root = new Container();
-        $container = new Container([], $root);
-
-        $this->assertTrue($container->has(ContainerInterface::class));
-        $this->assertTrue($container->has(Container::class));
-        $this->assertSame($root, $container->get(ContainerInterface::class));
-        $this->assertSame($root, $container->get(Container::class));
-    }
-
-    public function testSetRemoveRoot()
-    {
-        $root = new Container();
-        $container = new Container();
-        $this->assertSame($container, $container->setRoot($root));
-
-        $this->assertTrue($container->has(ContainerInterface::class));
-        $this->assertTrue($container->has(Container::class));
-        $this->assertSame($root, $container->get(ContainerInterface::class));
-        $this->assertSame($root, $container->get(Container::class));
-
-        $this->assertSame($container, $container->setRoot());
-        $this->assertTrue($container->has(ContainerInterface::class));
-        $this->assertTrue($container->has(Container::class));
-        $this->assertSame($container, $container->get(ContainerInterface::class));
-        $this->assertSame($container, $container->get(Container::class));
-    }
-
-    public function testRegisterGetHas()
-    {
-        $container = new Container();
-        $this->assertSame($container, $container->register('id', function ($dic) {return new stdClass();}));
-        $this->assertTrue($container->has('id'));
-        $this->assertInstanceOf('stdClass', $container->get('id'));
+        $this->assertInstanceOf(TestWithConstructor::class, $this->dic->get(TestWithConstructor::class));
     }
 
     /**
-     * @dataProvider getValues
+     * @expectedException Aidphp\Di\NotFoundException
+     * @expectedExceptionMessage Unable to resolve "UnknowClass"
      */
-    public function testSetGetHas($id, $value)
+    public function testWithClassNotFount()
     {
-        $container = new Container();
-        $this->assertSame($container, $container->set($id, $value));
-        $this->assertTrue($container->has($id));
-        $this->assertSame($value, $container->get($id));
-    }
-
-    public function getValues()
-    {
-        return [
-            'null'    => ['id', null],
-            'empty'   => ['id', ''],
-            'string'  => ['id', 'string'],
-            'int'     => ['id', 5],
-            'array'   => ['id', ['foo', 'bar']],
-            'closure' => ['id', function () {return;}],
-            'object'  => ['id', new stdClass()],
-        ];
+        $this->dic->get('UnknowClass');
     }
 
     /**
-     * @dataProvider getReplaceValues
+     * @dataProvider getInvalidClass
+     * @expectedException Aidphp\Di\ContainerException
      */
-    public function testReplace(array $data, $id, $value)
+    public function testWithInvalidClass($class)
     {
-        $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Identifier "' . $id . '" is already defined, cannot replace it');
-
-        $container = new Container($data);
-        $container->set($id, $value);
+        $this->dic->get($class);
     }
 
-    public function getReplaceValues()
+    public function getInvalidClass()
     {
         return [
-            [['id' => 'foo'], 'id', 'bar'],
-            [[], ContainerInterface::class, 'foo'],
-            [[], Container::class, 'foo'],
+            [TestInterface::class],
+            [TestWithPrivateConstructor::class],
+            [TestAbstract::class],
+            [TestTrait::class]
         ];
     }
 
-    public function testGetNotFound()
+    public function testClassWithConcreteTypehint()
     {
-        $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Identifier "id" is not defined');
+        $instance = $this->dic->get(TestNeedDependency::class);
 
-        $container = new Container();
-        $container->get('id');
+        $this->assertInstanceOf(TestNeedDependency::class, $instance);
+        $this->assertInstanceOf(TestDependency::class, $instance->test);
     }
 
-    public function testGetNewInstance()
+    public function testClassImplementInterface()
     {
-        $container = new Container();
-        $this->assertSame($container, $container->register('id', function ($dic) {return new stdClass();}, false));
-        $this->assertNotSame($container->get('id'), $container->get('id'));
+        $this->dic->define(TestInterface::class, TestImplementation::class);
+
+        $instance = $this->dic->get(TestInterface::class);
+
+        $this->assertInstanceOf(TestInterface::class, $instance);
+        $this->assertInstanceOf(TestImplementation::class, $instance);
     }
 
-    public function testGetShareInstance()
+    public function testClassWithInterfaceDependency()
     {
-        $container = new Container();
-        $this->assertSame($container, $container->register('id', function ($dic) {return new stdClass();}));
-        $this->assertSame($container->get('id'), $container->get('id'));
+        $this->dic->define(TestInterface::class, TestImplementation::class);
+
+        $instance = $this->dic->get(TestRequireInterface::class);
+
+        $this->assertInstanceOf(TestRequireInterface::class, $instance);
+        $this->assertInstanceOf(TestInterface::class, $instance->test);
+        $this->assertInstanceOf(TestImplementation::class, $instance->test);
     }
 
-    public function testContainerFactoryParameter()
+    /**
+     * @expectedException Aidphp\Di\ParameterNotFoundException
+     * @expectedExceptionMessage Unable to resolve the parameter 1 named $test of type Test\Aidphp\Di\TestInterface in Test\Aidphp\Di\TestRequireInterface::__construct()
+     */
+    public function testClassWithoutImplementation()
     {
-        $container = new Container();
-        $this->assertSame($container, $container->register('id', function ($dic) {return $dic;}));
-        $this->assertInstanceOf(Container::class, $container->get('id'));
-        $this->assertSame($container, $container->get('id'));
+        $this->dic->get(TestRequireInterface::class);
     }
 
-    public function testChangeContainerFactoryParameterForNewInstance()
+    public function testClassWithNullValue()
     {
-        $container = new Container();
-        $this->assertSame($container, $container->register('id', function ($dic) {return $dic;}, false));
-        $this->assertSame($container, $container->get('id'));
+        $instance = $this->dic->get(TestWithNullValue::class);
 
-        $root = new Container();
-        $this->assertSame($container, $container->setRoot($root));
-        $this->assertSame($root, $container->get('id'));
-
-        $this->assertSame($container, $container->setRoot());
-        $this->assertSame($container, $container->get('id'));
+        $this->assertInstanceOf(TestWithNullValue::class, $instance);
+        $this->assertNull($instance->arg);
     }
 
-    public function testSameContainerFactoryParameterForSameInstance()
+    public function testClassWithDefaultValue()
     {
-        $container = new Container();
-        $this->assertSame($container, $container->register('id', function ($dic) {return $dic;}));
-        $this->assertSame($container, $container->get('id'));
+        $instance = $this->dic->get(TestWithDefaultValue::class);
 
-        $root = new Container();
-        $this->assertSame($container, $container->setRoot($root));
-        $this->assertSame($container, $container->get('id'));
+        $this->assertInstanceOf(TestWithDefaultValue::class, $instance);
+        $this->assertSame('foo', $instance->arg);
+    }
 
-        $this->assertSame($container, $container->setRoot());
-        $this->assertSame($container, $container->get('id'));
+    public function testClassWithArguments()
+    {
+        $this->dic->define(TestWithArguments::class, null, ['foo', 'bar']);
+
+        $instance = $this->dic->get(TestWithArguments::class);
+
+        $this->assertSame('foo', $instance->arg1);
+        $this->assertSame('bar', $instance->arg2);
+    }
+
+    /**
+     * @expectedException Aidphp\Di\ParameterNotFoundException
+     * @expectedExceptionMessage Unable to resolve the parameter 1 named $arg1 in Test\Aidphp\Di\TestWithArguments::__construct()
+     */
+    public function testClassWithNullArguments()
+    {
+        $this->dic->get(TestWithArguments::class);
+    }
+
+    public function testShareString()
+    {
+        $this->dic->define(TestNeedDependency::class);
+
+        $instance1 = $this->dic->get(TestNeedDependency::class);
+        $instance2 = $this->dic->get(TestNeedDependency::class);
+
+        $this->assertSame($instance1, $instance2);
+        $this->assertSame($instance1->test, $instance2->test);
+    }
+
+    public function testDelegate()
+    {
+        $factory = $this->createMock(TestFactoryInterface::class);
+
+        $factory->expects($this->once())
+            ->method('__invoke')
+            ->with($this->dic)
+            ->will($this->returnValue(new TestDependency()));
+
+        $this->dic->delegate(TestDependency::class, $factory);
+
+        $this->assertInstanceOf(TestDependency::class, $this->dic->get(TestDependency::class));
+    }
+
+    public function testClassWithOptionalInterface()
+    {
+        $instance = $this->dic->get(TestOptionalInterface::class);
+
+        $this->assertInstanceOf(TestOptionalInterface::class, $instance);
+        $this->assertNull($instance->test);
+    }
+
+    public function testClassWithOptionalInterfaceResolveByAlias()
+    {
+        $this->dic->define(TestInterface::class, TestImplementation::class);
+        $instance = $this->dic->get(TestOptionalInterface::class);
+
+        $this->assertInstanceOf(TestOptionalInterface::class, $instance);
+        $this->assertInstanceOf(TestImplementation::class, $instance->test);
+    }
+
+    public function testClassWithOptionalInterfaceResolveByDelegate()
+    {
+        $this->dic->delegate(TestInterface::class, function ($dic) {return new TestImplementation();});
+        $instance = $this->dic->get(TestOptionalInterface::class);
+
+        $this->assertInstanceOf(TestOptionalInterface::class, $instance);
+        $this->assertInstanceOf(TestImplementation::class, $instance->test);
+    }
+
+    /**
+     * @dataProvider getClasses
+     */
+    public function testHasClass(string $id, bool $flag)
+    {
+        $this->assertSame($flag, $this->dic->has($id));
+    }
+
+    public function getClasses()
+    {
+        return [
+            [TestWithoutConstructor::class, true],
+            [TestWithConstructor::class, true],
+            [TestNeedDependency::class, true],
+            [TestDependency::class, true],
+            [TestImplementation::class, true],
+            [TestRequireInterface::class, true],
+            [TestWithNullValue::class, true],
+            [TestWithDefaultValue::class, true],
+            [TestWithArguments::class, true],
+            [TestOptionalInterface::class, true],
+            [TestWithPrivateConstructor::class, true],
+            [stdClass::class, true],
+
+            ['UnknowClass', false],
+            [TestInterface::class, false],
+            [TestFactoryInterface::class, false],
+        ];
     }
 }

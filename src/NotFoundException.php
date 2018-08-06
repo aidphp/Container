@@ -11,6 +11,6 @@ class NotFoundException extends InvalidArgumentException implements NotFoundExce
 {
     public function __construct($id)
     {
-        parent::__construct('Identifier "' . $id . '" is not defined');
+        parent::__construct('Unable to resolve "' . $id . '"');
     }
 }

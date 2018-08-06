@@ -27,6 +27,9 @@
 	"autoload-dev" : {
 		"psr-4" : {
 			"Test\\Aidphp\\Di\\" : "test/"
-		}
+		},
+		"files" : [
+			"test/Classes.php"
+		]
 	}
 }
