@@ -16,12 +16,14 @@ class Container implements ContainerInterface
 
     public function define(string $id, string $class = null, array $params = [], bool $shared = true): self
     {
+        unset($this->instances[$id], $this->factories[$id]);
         $this->definitions[$id] = [$class ?? $id, $params, $shared];
         return $this;
     }
 
     public function delegate(string $id, callable $factory, bool $shared = true): self
     {
+        unset($this->instances[$id], $this->factories[$id]);
         $this->factories[$id] = [$factory, $shared];
         return $this;
     }
@@ -77,7 +79,7 @@ class Container implements ContainerInterface
         if (null !== ($refMethod = $refClass->getConstructor()))
         {
             $resolver = $this->getArgsResolver($refMethod, $params);
-            $factory  = function ($dic) use ($class, $resolver) {return new $class(...$resolver());};
+            $factory  = function ($dic) use ($class, $resolver) {return new $class(...$resolver($dic));};
         }
         else
         {
@@ -99,7 +101,7 @@ class Container implements ContainerInterface
             ];
         }
 
-        return function () use ($paramsInfo, $params) {
+        return function ($dic) use ($paramsInfo, $params) {
             $values = [];
 
             foreach ($paramsInfo as [$class, $param])
@@ -108,7 +110,7 @@ class Container implements ContainerInterface
                 {
                     try
                     {
-                        $values[] = $this->get($class);
+                        $values[] = $dic->get($class);
                     }
                     catch (ContainerExceptionInterface $e)
                     {

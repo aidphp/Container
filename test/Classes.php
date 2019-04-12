@@ -50,6 +50,10 @@ class TestImplementation implements TestInterface
 {
 }
 
+class TestAnotherImplementation implements TestInterface
+{
+}
+
 class TestRequireInterface
 {
     public function __construct(TestInterface $test)

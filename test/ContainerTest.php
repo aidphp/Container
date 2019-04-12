@@ -126,7 +126,7 @@ class ContainerTest extends TestCase
         $this->dic->get(TestWithArguments::class);
     }
 
-    public function testShareString()
+    public function testShareInstance()
     {
         $this->dic->define(TestNeedDependency::class);
 
@@ -205,5 +205,56 @@ class ContainerTest extends TestCase
             [TestInterface::class, false],
             [TestFactoryInterface::class, false],
         ];
+    }
+
+    public function testUpdateDefinition()
+    {
+        $this->dic->define(TestInterface::class, TestImplementation::class, [], false);
+        $instance1 = $this->dic->get(TestRequireInterface::class);
+
+        $this->dic->define(TestInterface::class, TestAnotherImplementation::class, [], false);
+        $instance2 = $this->dic->get(TestRequireInterface::class);
+
+        $this->assertNotSame($instance1, $instance2);
+        $this->assertNotSame($instance1->test, $instance2->test);
+        $this->assertInstanceOf(TestImplementation::class, $instance1->test);
+        $this->assertInstanceOf(TestAnotherImplementation::class, $instance2->test);
+    }
+
+    public function testCloneShareDefinitionsAndInstances()
+    {
+        $this->dic->define(TestNeedDependency::class);
+        $instance1 = $this->dic->get(TestNeedDependency::class);
+
+        $dic2 = clone $this->dic;
+        $instance2 = $dic2->get(TestNeedDependency::class);
+
+        $this->assertSame($instance1, $instance2);
+        $this->assertSame($instance1->test, $instance2->test);
+    }
+
+    public function testCloneDoNotShareNewInstance()
+    {
+        $instance1 = $this->dic->get(TestNeedDependency::class);
+
+        $dic2 = clone $this->dic;
+        $instance2 = $dic2->get(TestNeedDependency::class);
+
+        $this->assertNotSame($instance1, $instance2);
+    }
+
+    public function testCloneAndUpdateDefinition()
+    {
+        $this->dic->define(TestInterface::class, TestImplementation::class, [], false);
+        $instance1 = $this->dic->get(TestRequireInterface::class);
+
+        $dic2 = clone $this->dic;
+        $dic2->define(TestInterface::class, TestAnotherImplementation::class, [], false);
+        $instance2 = $dic2->get(TestRequireInterface::class);
+
+        $this->assertNotSame($instance1, $instance2);
+        $this->assertNotSame($instance1->test, $instance2->test);
+        $this->assertInstanceOf(TestImplementation::class, $instance1->test);
+        $this->assertInstanceOf(TestAnotherImplementation::class, $instance2->test);
     }
 }
